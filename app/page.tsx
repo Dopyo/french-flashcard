@@ -31,7 +31,7 @@ export default function Home() {
   }, []);
 
   // Update flashcards based on the slice range
-  const updateFlashcards = (data: any[], start: number, end: number) => {
+  const updateFlashcards = (data: Flashcard[], start: number, end: number) => {
     // Validate range
     if (start < 0 || end < 0 || start >= data.length || end > data.length || start > end) {
       console.error("Invalid range");

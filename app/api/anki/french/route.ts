@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import * as sqlite3 from 'sqlite3';
 import * as path from 'path';
 
@@ -18,7 +18,7 @@ interface Note {
 // Initialize the SQLite database
 const db = new sqlite3.Database(path.join(process.cwd(), 'db', 'anki_french', 'collection.anki2'));
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     // Query to get notes from the Anki database
     const query = 'SELECT id, flds, mid FROM notes';
