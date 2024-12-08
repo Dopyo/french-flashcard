@@ -16,19 +16,21 @@ export default function Home() {
   const [rangeEnd, setRangeEnd] = useState(20); // End index for slice
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const response = await fetch("/api/anki/french");
-        const data = await response.json();
-        setFetchedData(data); // Store entire fetched data
-        updateFlashcards(data, rangeStart, rangeEnd); // Initialize flashcards on load
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    }
+    const fetchDataWithDelay = () => {
+      setTimeout(async () => {
+        try {
+          const response = await fetch("/api/anki/french");
+          const data = await response.json();
+          setFetchedData(data); // Store entire fetched data
+          updateFlashcards(data, rangeStart, rangeEnd); // Initialize flashcards on load
+        } catch (error) {
+          console.error("Error fetching data:", error);
+        }
+      }, 1000); // Fetch after a 1-second delay
+    };
 
-    fetchData();
-  }, []);
+    fetchDataWithDelay(); // Trigger the fetch after the delay
+  }, [rangeStart, rangeEnd]); // Dependencies ensure it refetches when the range changes
 
   // Update flashcards based on the slice range
   const updateFlashcards = (data: Flashcard[], start: number, end: number) => {
