@@ -1,101 +1,121 @@
-import Image from "next/image";
+"use client";
+
+import { FlashcardArray } from "react-quizlet-flashcard";
+import { JSX, useEffect, useState } from "react";
+
+interface Flashcard {
+  id: number;
+  fields: string[];
+  model: number;
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [cards, setCards] = useState<{ id: number; frontHTML: JSX.Element; backHTML: JSX.Element }[]>([]);
+  const [fetchedData, setFetchedData] = useState([]); // Entire fetched data
+  const [rangeStart, setRangeStart] = useState(0); // Start index for slice
+  const [rangeEnd, setRangeEnd] = useState(20); // End index for slice
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const response = await fetch("/api/anki/french");
+        const data = await response.json();
+        setFetchedData(data); // Store entire fetched data
+        updateFlashcards(data, rangeStart, rangeEnd); // Initialize flashcards on load
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    }
+
+    fetchData();
+  }, []);
+
+  // Update flashcards based on the slice range
+  const updateFlashcards = (data: any[], start: number, end: number) => {
+    // Validate range
+    if (start < 0 || end < 0 || start >= data.length || end > data.length || start > end) {
+      console.error("Invalid range");
+      return; // Return if the range is invalid
+    }
+
+    const flashcards = data.slice(start, end).map((item: Flashcard) => {
+      const word = item.fields[0]; // The French word
+      const masculineWord = item.fields[1]; // Masculine word
+      const feminineWord = item.fields[2]; // Feminine word
+
+      // Determine the gender based on which field is not empty
+      let gender = "Unknown";
+      if (masculineWord && masculineWord === word) {
+        gender = "Masculine";
+      } else if (feminineWord && feminineWord === word) {
+        gender = "Feminine";
+      }
+
+      return {
+        id: item.id,
+        frontHTML: (
+          <div className="flex items-center justify-center h-full">
+            {word} {/* Word in French */}
+          </div>
+        ),
+        backHTML: (
+          <div className="flex flex-col items-center justify-center h-full">
+            <div>
+              <strong>Gender:</strong> {gender}
+            </div>
+            <div>
+              <strong>Gender Recognition:</strong> {item.fields[3] || "Not Available"}%
+            </div>
+            <div>
+              <strong>Word Frequency:</strong> {item.fields[4] || "Not Available"}
+            </div>
+            <div>
+              <strong>Gender Recognition Increase:</strong> {item.fields[5] || "Not Available"}%
+            </div>
+          </div>
+        ),
+      };
+    });
+    setCards(flashcards); // Update flashcards state
+  };
+
+  // Handle range change
+  const handleRangeChange = () => {
+    updateFlashcards(fetchedData, rangeStart, rangeEnd); // Update flashcards based on new range
+  };
+
+  return (
+    <div className="h-screen flex flex-col items-center justify-center">
+      <div className="mb-4">
+        <label>Start Index:</label>
+        <input
+          type="number"
+          value={rangeStart}
+          onChange={(e) => setRangeStart(Math.max(0, Number(e.target.value)))}
+          className="mx-2 p-2 border"
+        />
+      </div>
+      <div className="mb-4">
+        <label>End Index:</label>
+        <input
+          type="number"
+          value={rangeEnd}
+          onChange={(e) => setRangeEnd(Math.min(fetchedData.length, Number(e.target.value)))}
+          className="mx-2 p-2 border"
+        />
+      </div>
+      <button
+        onClick={handleRangeChange}
+        className="mb-4 p-2 bg-blue-500 text-white rounded"
+      >
+        Update Flashcards
+      </button>
+
+      {cards.length > 0 ? (
+        <FlashcardArray cards={cards} />
+      ) : (
+        <div>Loading...</div>
+      )}
     </div>
   );
 }
